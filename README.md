@@ -8,6 +8,7 @@ Current scope:
 - Prisma setup with PostgreSQL datasource
 - environment validation with `@nestjs/config` and `joi`
 - technical health endpoint at `GET /health`
+- Finnhub integration service for stock quote fetching
 
 ## Requirements
 
@@ -23,25 +24,27 @@ Current scope:
 cp .env.example .env
 ```
 
-2. Start PostgreSQL in Docker:
+2. Add your Finnhub API key to `.env`.
+
+3. Start PostgreSQL in Docker:
 
 ```bash
 npm run db:up
 ```
 
-3. Generate the Prisma client:
+4. Generate the Prisma client:
 
 ```bash
 npm run prisma:generate
 ```
 
-4. Start the Nest app on the host machine:
+5. Start the Nest app on the host machine:
 
 ```bash
 npm run start:dev
 ```
 
-5. Verify the technical health endpoint:
+6. Verify the technical health endpoint:
 
 ```bash
 curl http://localhost:3000/health
@@ -50,6 +53,7 @@ curl http://localhost:3000/health
 Expected behavior:
 - app responds with JSON
 - `database.status` should become `up` when the local PostgreSQL container is reachable
+- Finnhub-backed features will require `FINNHUB_API_KEY`
 
 ## Useful commands
 
