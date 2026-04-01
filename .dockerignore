@@ -1,0 +1,10 @@
+dist
+coverage
+node_modules
+src/generated/prisma
+.env
+.env.local
+.git
+.gitignore
+.vscode
+npm-debug.log*
