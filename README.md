@@ -12,6 +12,7 @@ Current scope:
 - stock tracking registration endpoint at `PUT /stock/:symbol`
 - scheduled stock price ingestion for active tracked symbols
 - read model endpoint at `GET /stock/:symbol` with 10-sample moving average
+- Swagger documentation at `GET /docs`
 
 ## Requirements
 
@@ -59,6 +60,12 @@ npm run start:dev
 curl http://localhost:3000/health
 ```
 
+8. Open the Swagger UI:
+
+```bash
+open http://localhost:3000/docs
+```
+
 Expected behavior:
 - app responds with JSON
 - `database.status` should become `up` when the local PostgreSQL container is reachable
@@ -66,6 +73,7 @@ Expected behavior:
 - `PUT /stock/:symbol` should start tracking for a validated symbol
 - the scheduler now runs every minute and stores price snapshots for active symbols
 - `GET /stock/:symbol` returns the latest stored price and moving average for the last 10 samples
+- `GET /docs` exposes the Swagger UI for the API
 
 ## Useful commands
 
