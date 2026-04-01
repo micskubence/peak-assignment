@@ -62,6 +62,41 @@ describe('FinnhubService', () => {
     expect(quote.sourceTimestamp).toBe('2024-04-05T13:20:00.000Z');
   });
 
+  it('accepts an exact Finnhub symbol search match', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        count: 1,
+        result: [
+          {
+            description: 'Apple Inc',
+            displaySymbol: 'AAPL',
+            symbol: 'AAPL',
+            type: 'Common Stock',
+          },
+        ],
+      }),
+      status: 200,
+    });
+
+    await expect(service.validateSymbol(' aapl ')).resolves.toBeUndefined();
+  });
+
+  it('rejects a symbol without an exact Finnhub search match', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        count: 0,
+        result: [],
+      }),
+      status: 200,
+    });
+
+    await expect(service.validateSymbol('AAPLAPL')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
   it('throws when the symbol is empty', async () => {
     await expect(service.getQuote('   ')).rejects.toBeInstanceOf(
       BadRequestException,

@@ -23,6 +23,7 @@ describe('AppController (e2e)', () => {
   };
 
   const finnhubServiceMock = {
+    validateSymbol: jest.fn().mockResolvedValue(undefined),
     getQuote: jest.fn().mockResolvedValue({
       symbol: 'AAPL',
       currentPrice: 185.12,
@@ -71,6 +72,7 @@ describe('AppController (e2e)', () => {
     const response = await request(app.getHttpServer()).put('/stock/aapl');
 
     expect(response.status).toBe(200);
+    expect(finnhubServiceMock.validateSymbol).toHaveBeenCalledWith('AAPL');
     expect(finnhubServiceMock.getQuote).toHaveBeenCalledWith('AAPL');
     expect(prismaServiceMock.trackedSymbol.upsert).toHaveBeenCalledWith({
       where: { symbol: 'AAPL' },

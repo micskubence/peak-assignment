@@ -13,6 +13,7 @@ export class StockService {
   async startTracking(symbol: string): Promise<StartTrackingResponseDto> {
     const normalizedSymbol = this.normalizeSymbol(symbol);
 
+    await this.finnhubService.validateSymbol(normalizedSymbol);
     await this.finnhubService.getQuote(normalizedSymbol);
 
     const trackedSymbol = await this.prismaService.trackedSymbol.upsert({

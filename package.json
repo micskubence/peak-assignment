@@ -33,6 +33,7 @@
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.17",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/schedule": "^6.1.1",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "joi": "^18.1.2",

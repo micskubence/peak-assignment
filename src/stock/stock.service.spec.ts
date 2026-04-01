@@ -14,6 +14,7 @@ describe('StockService', () => {
   };
 
   const finnhubServiceMock = {
+    validateSymbol: jest.fn(),
     getQuote: jest.fn(),
   };
 
@@ -38,6 +39,7 @@ describe('StockService', () => {
   });
 
   it('creates or reactivates tracking for a normalized symbol', async () => {
+    finnhubServiceMock.validateSymbol.mockResolvedValue(undefined);
     finnhubServiceMock.getQuote.mockResolvedValue({
       symbol: 'AAPL',
       currentPrice: 185.12,
@@ -51,6 +53,7 @@ describe('StockService', () => {
 
     const result = await service.startTracking(' aapl ');
 
+    expect(finnhubServiceMock.validateSymbol).toHaveBeenCalledWith('AAPL');
     expect(finnhubServiceMock.getQuote).toHaveBeenCalledWith('AAPL');
     expect(prismaServiceMock.trackedSymbol.upsert).toHaveBeenCalledWith({
       where: { symbol: 'AAPL' },
