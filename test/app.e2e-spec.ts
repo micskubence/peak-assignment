@@ -14,6 +14,7 @@ describe('AppController (e2e)', () => {
       detail: 'DATABASE_URL is not configured.',
     }),
     trackedSymbol: {
+      findUnique: jest.fn(),
       upsert: jest.fn().mockResolvedValue({
         symbol: 'AAPL',
         isActive: true,
@@ -89,6 +90,68 @@ describe('AppController (e2e)', () => {
       symbol: 'AAPL',
       trackingActive: true,
       startedAt: '2024-04-05T10:00:00.000Z',
+    });
+  });
+
+  it('/stock/:symbol (GET)', async () => {
+    prismaServiceMock.trackedSymbol.findUnique.mockResolvedValue({
+      symbol: 'AAPL',
+      isActive: true,
+      prices: [
+        {
+          price: '110.0000',
+          fetchedAt: new Date('2024-04-05T10:09:00.000Z'),
+        },
+        {
+          price: '109.0000',
+          fetchedAt: new Date('2024-04-05T10:08:00.000Z'),
+        },
+        {
+          price: '108.0000',
+          fetchedAt: new Date('2024-04-05T10:07:00.000Z'),
+        },
+        {
+          price: '107.0000',
+          fetchedAt: new Date('2024-04-05T10:06:00.000Z'),
+        },
+        {
+          price: '106.0000',
+          fetchedAt: new Date('2024-04-05T10:05:00.000Z'),
+        },
+        {
+          price: '105.0000',
+          fetchedAt: new Date('2024-04-05T10:04:00.000Z'),
+        },
+        {
+          price: '104.0000',
+          fetchedAt: new Date('2024-04-05T10:03:00.000Z'),
+        },
+        {
+          price: '103.0000',
+          fetchedAt: new Date('2024-04-05T10:02:00.000Z'),
+        },
+        {
+          price: '102.0000',
+          fetchedAt: new Date('2024-04-05T10:01:00.000Z'),
+        },
+        {
+          price: '101.0000',
+          fetchedAt: new Date('2024-04-05T10:00:00.000Z'),
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer()).get('/stock/aapl');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      symbol: 'AAPL',
+      currentPrice: 110,
+      lastUpdatedAt: '2024-04-05T10:09:00.000Z',
+      movingAverage10: 105.5,
+      sampleCount: 10,
+      trackingActive: true,
+      status: 'ACTIVE',
     });
   });
 });
