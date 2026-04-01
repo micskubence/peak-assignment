@@ -5,6 +5,9 @@ export const envValidationSchema = Joi.object({
     .valid('development', 'test', 'production')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+  CORS_ORIGINS: Joi.string()
+    .trim()
+    .default('http://localhost:5173,https://peak-frontend.micsku.hu'),
   FINNHUB_API_KEY: Joi.alternatives().conditional('NODE_ENV', {
     is: 'test',
     then: Joi.string().optional(),
