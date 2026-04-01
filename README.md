@@ -9,6 +9,7 @@ Current scope:
 - environment validation with `@nestjs/config` and `joi`
 - technical health endpoint at `GET /health`
 - Finnhub integration service for stock quote fetching
+- stock tracking registration endpoint at `PUT /stock/:symbol`
 
 ## Requirements
 
@@ -32,19 +33,25 @@ cp .env.example .env
 npm run db:up
 ```
 
-4. Generate the Prisma client:
+4. Apply the local Prisma migration:
+
+```bash
+npm run prisma:migrate:dev
+```
+
+5. Generate the Prisma client:
 
 ```bash
 npm run prisma:generate
 ```
 
-5. Start the Nest app on the host machine:
+6. Start the Nest app on the host machine:
 
 ```bash
 npm run start:dev
 ```
 
-6. Verify the technical health endpoint:
+7. Verify the technical health endpoint:
 
 ```bash
 curl http://localhost:3000/health
@@ -54,6 +61,7 @@ Expected behavior:
 - app responds with JSON
 - `database.status` should become `up` when the local PostgreSQL container is reachable
 - Finnhub-backed features will require `FINNHUB_API_KEY`
+- `PUT /stock/:symbol` should start tracking for a validated symbol
 
 ## Useful commands
 

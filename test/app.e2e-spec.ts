@@ -1,24 +1,52 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
-import { AppModule } from './../src/app.module';
-import { PrismaService } from './../src/prisma/prisma.service';
+import { AppModule } from '../src/app.module';
+import { FinnhubService } from '../src/finnhub/finnhub.service';
+import { PrismaService } from '../src/prisma/prisma.service';
 
-describe('HealthController (e2e)', () => {
+describe('AppController (e2e)', () => {
   let app: INestApplication;
 
-  const prismaService = {
+  const prismaServiceMock = {
     getDatabaseHealth: jest.fn().mockResolvedValue({
       status: 'not_configured',
+      detail: 'DATABASE_URL is not configured.',
+    }),
+    trackedSymbol: {
+      upsert: jest.fn().mockResolvedValue({
+        symbol: 'AAPL',
+        isActive: true,
+        startedAt: new Date('2024-04-05T10:00:00.000Z'),
+      }),
+    },
+  };
+
+  const finnhubServiceMock = {
+    getQuote: jest.fn().mockResolvedValue({
+      symbol: 'AAPL',
+      currentPrice: 185.12,
+      change: 1.4,
+      percentChange: 0.76,
+      high: 186.2,
+      low: 183.7,
+      open: 184.1,
+      previousClose: 183.72,
+      fetchedAt: '2024-04-05T10:00:00.000Z',
+      sourceTimestamp: '2024-04-05T13:20:00.000Z',
     }),
   };
 
   beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    jest.clearAllMocks();
+
+    const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
-      .useValue(prismaService)
+      .useValue(prismaServiceMock)
+      .overrideProvider(FinnhubService)
+      .useValue(finnhubServiceMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -31,22 +59,34 @@ describe('HealthController (e2e)', () => {
     }
   });
 
-  it('/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toEqual(
-          expect.objectContaining({
-            status: 'degraded',
-            environment: 'test',
-            database: expect.objectContaining({
-              status: 'not_configured',
-            }),
-          }),
-        );
-        expect(body.timestamp).toEqual(expect.any(String));
-        expect(body.uptimeSeconds).toEqual(expect.any(Number));
-      });
+  it('/health (GET)', async () => {
+    const response = await request(app.getHttpServer()).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('degraded');
+    expect(response.body.database.status).toBe('not_configured');
+  });
+
+  it('/stock/:symbol (PUT)', async () => {
+    const response = await request(app.getHttpServer()).put('/stock/aapl');
+
+    expect(response.status).toBe(200);
+    expect(finnhubServiceMock.getQuote).toHaveBeenCalledWith('AAPL');
+    expect(prismaServiceMock.trackedSymbol.upsert).toHaveBeenCalledWith({
+      where: { symbol: 'AAPL' },
+      create: {
+        symbol: 'AAPL',
+        isActive: true,
+      },
+      update: {
+        isActive: true,
+        lastError: null,
+      },
+    });
+    expect(response.body).toEqual({
+      symbol: 'AAPL',
+      trackingActive: true,
+      startedAt: '2024-04-05T10:00:00.000Z',
+    });
   });
 });

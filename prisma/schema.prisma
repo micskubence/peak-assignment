@@ -1,11 +1,35 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
-  engineType   = "client"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  engineType          = "client"
   importFileExtension = ""
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model TrackedSymbol {
+  id            String       @id @default(cuid())
+  symbol        String       @unique
+  isActive      Boolean      @default(true)
+  startedAt     DateTime     @default(now())
+  lastFetchedAt DateTime?
+  lastError     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  prices        StockPrice[]
+}
+
+model StockPrice {
+  id              String        @id @default(cuid())
+  trackedSymbolId String
+  price           Decimal       @db.Decimal(12, 4)
+  fetchedAt       DateTime      @default(now())
+  sourceTimestamp DateTime?
+  createdAt       DateTime      @default(now())
+  trackedSymbol   TrackedSymbol @relation(fields: [trackedSymbolId], references: [id], onDelete: Cascade)
+
+  @@index([trackedSymbolId, fetchedAt])
 }
