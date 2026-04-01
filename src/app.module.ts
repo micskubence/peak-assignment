@@ -4,6 +4,7 @@ import { envValidationSchema } from './config/env.validation';
 import { FinnhubModule } from './finnhub/finnhub.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { StockModule } from './stock/stock.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PrismaModule } from './prisma/prisma.module';
     FinnhubModule,
     PrismaModule,
     HealthModule,
+    StockModule,
   ],
 })
 export class AppModule {}
