@@ -80,12 +80,19 @@ Expected behavior:
 ```bash
 npm run build
 npm test -- --runInBand
+npm run test:integration -- --runInBand
 npm run test:e2e -- --runInBand
 npm run lint
 npm run prisma:migrate:dev
+npm run prisma:migrate:deploy
 npm run prisma:studio
 npm run db:down
 ```
+
+## CI notes
+
+- GitHub Actions runs lint, unit tests, integration tests, e2e tests, build, and a Docker build smoke-check
+- the CI workflow starts a PostgreSQL service and applies Prisma migrations before integration coverage
 
 ## Docker notes
 

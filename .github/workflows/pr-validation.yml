@@ -9,6 +9,25 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      FINNHUB_API_KEY: test-finnhub-key
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/peak_assignment?schema=public
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: peak_assignment
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d peak_assignment"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout repository
@@ -26,11 +45,23 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Apply Prisma migrations
+        run: npm run prisma:migrate:deploy
+
       - name: Lint
         run: npm run lint
 
       - name: Run unit tests
         run: npm test -- --runInBand
 
+      - name: Run integration tests
+        run: npm run test:integration -- --runInBand
+
+      - name: Run e2e tests
+        run: npm run test:e2e -- --runInBand
+
       - name: Build application
         run: npm run build
+
+      - name: Build Docker image
+        run: docker build -t peak-assignment-ci .
