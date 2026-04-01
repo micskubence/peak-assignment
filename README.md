@@ -11,6 +11,7 @@ Current scope:
 - Finnhub integration service for stock quote fetching
 - stock tracking registration endpoint at `PUT /stock/:symbol`
 - scheduled stock price ingestion for active tracked symbols
+- read model endpoint at `GET /stock/:symbol` with 10-sample moving average
 
 ## Requirements
 
@@ -64,6 +65,7 @@ Expected behavior:
 - Finnhub-backed features will require `FINNHUB_API_KEY`
 - `PUT /stock/:symbol` should start tracking for a validated symbol
 - the scheduler now runs every minute and stores price snapshots for active symbols
+- `GET /stock/:symbol` returns the latest stored price and moving average for the last 10 samples
 
 ## Useful commands
 
