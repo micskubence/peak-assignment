@@ -10,6 +10,7 @@ Current scope:
 - technical health endpoint at `GET /health`
 - Finnhub integration service for stock quote fetching
 - stock tracking registration endpoint at `PUT /stock/:symbol`
+- scheduled stock price ingestion for active tracked symbols
 
 ## Requirements
 
@@ -62,6 +63,7 @@ Expected behavior:
 - `database.status` should become `up` when the local PostgreSQL container is reachable
 - Finnhub-backed features will require `FINNHUB_API_KEY`
 - `PUT /stock/:symbol` should start tracking for a validated symbol
+- the scheduler now runs every minute and stores price snapshots for active symbols
 
 ## Useful commands
 

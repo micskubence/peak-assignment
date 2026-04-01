@@ -10,15 +10,50 @@ import { ConfigService } from '@nestjs/config';
 import {
   FinnhubErrorResponse,
   FinnhubQuoteResponse,
+  FinnhubSymbolSearchResponse,
   StockQuote,
 } from './finnhub.types';
 
-const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+const FINNHUB_QUOTE_URL = 'https://finnhub.io/api/v1/quote';
+const FINNHUB_SEARCH_URL = 'https://finnhub.io/api/v1/search';
 const FINNHUB_TIMEOUT_MS = 10_000;
 
 @Injectable()
 export class FinnhubService {
   constructor(private readonly configService: ConfigService) {}
+
+  async validateSymbol(symbol: string): Promise<void> {
+    const normalizedSymbol = this.normalizeSymbol(symbol);
+    const apiKey = this.configService.get<string>('FINNHUB_API_KEY');
+
+    if (!apiKey) {
+      throw new InternalServerErrorException(
+        'FINNHUB_API_KEY is not configured.',
+      );
+    }
+
+    const payload = await this.fetchJson(
+      this.buildRequestUrl(FINNHUB_SEARCH_URL, normalizedSymbol, apiKey, 'q'),
+    );
+
+    if (!this.isFinnhubSymbolSearchResponse(payload)) {
+      throw new BadGatewayException(
+        'Finnhub returned an unexpected symbol search response.',
+      );
+    }
+
+    const hasExactMatch = payload.result.some(
+      (result) =>
+        result.symbol.toUpperCase() === normalizedSymbol ||
+        result.displaySymbol.toUpperCase() === normalizedSymbol,
+    );
+
+    if (!hasExactMatch) {
+      throw new BadRequestException(
+        `Invalid or unsupported stock symbol: ${normalizedSymbol}.`,
+      );
+    }
+  }
 
   async getQuote(symbol: string): Promise<StockQuote> {
     const normalizedSymbol = this.normalizeSymbol(symbol);
@@ -30,28 +65,10 @@ export class FinnhubService {
       );
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FINNHUB_TIMEOUT_MS);
-    const requestUrl = new URL('/quote', FINNHUB_BASE_URL);
-
-    requestUrl.searchParams.set('symbol', normalizedSymbol);
-    requestUrl.searchParams.set('token', apiKey);
-
     try {
-      const response = await fetch(requestUrl, {
-        headers: {
-          Accept: 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new BadGatewayException(
-          `Finnhub request failed with status ${response.status}.`,
-        );
-      }
-
-      const payload: unknown = await response.json();
+      const payload = await this.fetchJson(
+        this.buildRequestUrl(FINNHUB_QUOTE_URL, normalizedSymbol, apiKey),
+      );
 
       if (this.isFinnhubErrorResponse(payload)) {
         throw new BadGatewayException(
@@ -81,9 +98,9 @@ export class FinnhubService {
         throw new ServiceUnavailableException('Finnhub request timed out.');
       }
 
-      throw new ServiceUnavailableException('Unable to reach Finnhub.');
-    } finally {
-      clearTimeout(timeout);
+      throw new ServiceUnavailableException(
+        `Unable to reach Finnhub: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -148,5 +165,66 @@ export class FinnhubService {
     return ['c', 'd', 'dp', 'h', 'l', 'o', 'pc', 't'].every(
       (key) => typeof quote[key] === 'number',
     );
+  }
+
+  private isFinnhubSymbolSearchResponse(
+    payload: unknown,
+  ): payload is FinnhubSymbolSearchResponse {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const searchResponse = payload as Record<string, unknown>;
+
+    return (
+      typeof searchResponse.count === 'number' &&
+      Array.isArray(searchResponse.result)
+    );
+  }
+
+  private buildRequestUrl(
+    baseUrl: string,
+    symbol: string,
+    apiKey: string,
+    symbolParamName = 'symbol',
+  ): URL {
+    const requestUrl = new URL(baseUrl);
+
+    requestUrl.searchParams.set(symbolParamName, symbol);
+    requestUrl.searchParams.set('token', apiKey);
+
+    return requestUrl;
+  }
+
+  private async fetchJson(requestUrl: URL): Promise<unknown> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FINNHUB_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(requestUrl, {
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new BadGatewayException(
+          `Finnhub request failed with status ${response.status}.`,
+        );
+      }
+
+      return response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Unknown Finnhub error';
   }
 }
