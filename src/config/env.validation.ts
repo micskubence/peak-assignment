@@ -5,6 +5,11 @@ export const envValidationSchema = Joi.object({
     .valid('development', 'test', 'production')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+  FINNHUB_API_KEY: Joi.alternatives().conditional('NODE_ENV', {
+    is: 'test',
+    then: Joi.string().optional(),
+    otherwise: Joi.string().trim().min(1).required(),
+  }),
   POSTGRES_DB: Joi.string().default('peak_assignment'),
   POSTGRES_USER: Joi.string().default('postgres'),
   POSTGRES_PASSWORD: Joi.string().default('postgres'),

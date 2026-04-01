@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from './config/env.validation';
+import { FinnhubModule } from './finnhub/finnhub.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -11,6 +12,7 @@ import { PrismaModule } from './prisma/prisma.module';
       ignoreEnvFile: process.env.NODE_ENV === 'test',
       validationSchema: envValidationSchema,
     }),
+    FinnhubModule,
     PrismaModule,
     HealthModule,
   ],
